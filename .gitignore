@@ -1,0 +1,38 @@
+# Covers both client/ and server/.
+# These patterns have no leading slash, so they match at any depth.
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files - never commit real credentials.
+# The .env.example templates are kept.
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Caches
+.cache/
+.vite/
+.eslintcache
+
+# Temporary files
+*.tmp
+*.bak
+tmp/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS generated
+.DS_Store
+Thumbs.db
