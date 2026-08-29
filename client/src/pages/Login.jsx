@@ -69,11 +69,11 @@ const Login = () => {
     <div className="min-h-screen flex bg-bg">
       {/* Brand panel — hidden on mobile, where the form takes the full screen */}
       <div
-        className="hidden lg:flex w-[46%] flex-none relative flex-col justify-between px-[52px] py-14 overflow-hidden text-[#fff8f0]"
+        className="hidden lg:flex w-[46%] flex-none relative flex-col justify-between px-13 py-14 overflow-hidden text-[#fff8f0]"
         style={{ background: 'linear-gradient(155deg, #c67139 0%, #8c491a 46%, #56633f 120%)' }}
       >
-        <div aria-hidden="true" className="absolute -top-32 -right-24 w-[360px] h-[360px] rounded-full bg-[rgba(255,241,229,.14)]" />
-        <div aria-hidden="true" className="absolute -bottom-36 -left-20 w-[300px] h-[300px] rounded-full bg-[rgba(225,238,204,.16)]" />
+        <div aria-hidden="true" className="absolute -top-32 -right-24 w-90 h-90 rounded-full bg-[rgba(255,241,229,.14)]" />
+        <div aria-hidden="true" className="absolute -bottom-36 -left-20 w-75 h-75 rounded-full bg-[rgba(225,238,204,.16)]" />
 
         <div className="relative flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[rgba(255,248,240,.92)]" />
@@ -95,7 +95,7 @@ const Login = () => {
 
       {/* Form */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
-        <form onSubmit={handleSubmit} noValidate className="w-full max-w-[400px] flex flex-col gap-[18px]">
+        <form onSubmit={handleSubmit} noValidate className="w-full max-w-100 flex flex-col gap-4.5">
           <div className="lg:hidden flex items-center gap-3 mb-1">
             <div className="w-8 h-8 rounded-full"
               style={{ background: 'radial-gradient(circle at 32% 30%, #f6a06b, var(--accent) 55%, var(--accent-2) 135%)' }} />
@@ -146,7 +146,7 @@ const Login = () => {
             minLength={isRegister ? MIN_PASSWORD : undefined} required
           />
 
-          <Button type="submit" variant="gradient" loading={submitting} className="min-h-[52px] mt-1.5 text-base">
+          <Button type="submit" variant="gradient" loading={submitting} className="min-h-13 mt-1.5 text-base">
             {submitting
               ? (isRegister ? 'Creating account…' : 'Logging in…')
               : (isRegister ? 'Create account' : 'Log in')}
