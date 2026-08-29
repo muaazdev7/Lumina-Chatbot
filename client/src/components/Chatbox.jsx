@@ -271,6 +271,16 @@ const Chatbox = () => {
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={loading ? 'Generating…' : 'Type your prompt here…'}
               disabled={loading}
+              /* Prompts are full of names, code and jargon, so the browser's
+                 red squiggles are noise here. This only turns off the native
+                 spell/grammar UI - app validation is untouched. */
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              autoComplete="off"
+              data-gramm="false"
+              data-gramm_editor="false"
+              data-enable-grammarly="false"
               className="flex-1 min-w-0 border-0 bg-transparent outline-none text-[15px] text-text placeholder:text-faint disabled:cursor-not-allowed"
             />
 
