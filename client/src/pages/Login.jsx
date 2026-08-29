@@ -128,13 +128,13 @@ const Login = () => {
 
           {isRegister && (
             <Input
-              label="Name" type="text" autoComplete="name" placeholder="Muaaz Ahmed"
+              label="Name" type="text" autoComplete="name" placeholder="your name"
               value={values.name} onChange={set('name')} error={errors.name} required
             />
           )}
 
           <Input
-            label="Email" type="email" autoComplete="email" placeholder="you@studio.com"
+            label="Email" type="email" autoComplete="email" placeholder="you@gmail.com"
             value={values.email} onChange={set('email')} error={errors.email} required
           />
 

@@ -21,7 +21,7 @@ const Input = ({ label, error, className = '', id, ...rest }) => {
         id={inputId}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`w-full min-h-12 px-[18px] rounded-full bg-panel text-text text-[15px]
+        className={`w-full min-h-12 px-4.5 rounded-full bg-panel text-text text-[15px]
           border outline-none transition-[border-color,box-shadow] duration-150
           placeholder:text-faint
           focus:border-accent focus:shadow-[0_0_0_4px_rgba(198,113,57,.16)]
