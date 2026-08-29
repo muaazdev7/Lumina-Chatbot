@@ -1,7 +1,11 @@
 import express from 'express'
 import 'dotenv/config'
+// 2.5 - validates required env vars at import time, before the config modules
+// below construct their SDK clients. Exits with a readable list if any are missing.
+import './configs/env.js'
 import cors from 'cors'
 import helmet from 'helmet'
+import morgan from 'morgan'
 import connectDB from './configs/db.js'
 import userRouter from './routes/userRoutes.js'
 import chatRouter from './routes/chatRoutes.js'
@@ -9,6 +13,7 @@ import messageRouter from './routes/messageRoutes.js'
 import creditRouter from './routes/creditRoutes.js'
 import { stripeWebhooks } from './controllers/webhooks.js'
 import { allowedOrigins } from './configs/allowedOrigins.js'
+import { clientErrorMessage, logError } from './utils/errors.js'
 
 const app = express()
 
@@ -22,6 +27,14 @@ try {
 // Stripe Webhooks - must be registered before express.json() so the raw
 // body stays intact for signature verification.
 app.post('/api/stripe', express.raw({ type: 'application/json' }), stripeWebhooks)
+
+// 2.7 - request logging. Logs method, path, status and timing only - never
+// bodies or headers, so passwords and tokens are not captured.
+if (process.env.NODE_ENV !== 'production') {
+    app.use(morgan('dev'))
+} else {
+    app.use(morgan('combined'))
+}
 
 // 1.3 - security headers. Mounted after the Stripe raw-body route above so
 // that route is untouched. This does NOT replace CORS.
@@ -60,10 +73,16 @@ app.use((req, res) => {
 })
 
 // Central error handler (also converts CORS rejections into a JSON response)
+// 2.3 - internal detail is logged, never returned in production.
 app.use((err, req, res, next) => {
-    console.error(err.message)
-    const status = err.message?.startsWith('Not allowed by CORS') ? 403 : (err.status || 500)
-    res.status(status).json({ success: false, message: err.message || 'Internal Server Error' })
+    const isCors = err.message?.startsWith('Not allowed by CORS')
+    const status = isCors ? 403 : (err.status || 500)
+
+    logError('error-handler', err)
+
+    // CORS rejections are actionable for the caller, so keep that message.
+    const message = isCors ? err.message : clientErrorMessage(err)
+    res.status(status).json({ success: false, message })
 })
 
 const PORT = process.env.PORT || 3000

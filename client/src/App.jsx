@@ -9,6 +9,7 @@ import Login from './pages/Login'
 import { assets } from './assets/assets'
 import './assets/prism.css'
 import { useAppContext } from './context/AppContext'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -36,11 +37,15 @@ const App = () => {
         {user ? (
           <div className='flex h-screen w-screen bg-white text-black dark:bg-gradient-to-b dark:from-[#242124] dark:to-[#000000] dark:text-white transition-all duration-500'>
             <Sidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-            <Routes>
-              <Route path='/' element={<Chatbox />} />
-              <Route path='/credits' element={<Credits />} />
-              <Route path='/community' element={<Community />} />
-            </Routes>
+            {/* 2.6 - a render error inside a route no longer blanks the app;
+                the sidebar stays usable. */}
+            <ErrorBoundary>
+              <Routes>
+                <Route path='/' element={<Chatbox />} />
+                <Route path='/credits' element={<Credits />} />
+                <Route path='/community' element={<Community />} />
+              </Routes>
+            </ErrorBoundary>
           </div>
         ) : (
           <div className='bg-gradient-to-b from-[#242124] to-[#000000] flex

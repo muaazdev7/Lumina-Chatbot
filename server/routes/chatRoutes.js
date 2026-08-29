@@ -1,6 +1,8 @@
 import express from "express";
 import { createChat, deleteChat, getChats } from "../controllers/chatController.js";
 import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { deleteChatSchema } from "../validators/chatSchemas.js";
 
 const chatRouter = express.Router();
 
@@ -8,6 +10,6 @@ const chatRouter = express.Router();
 chatRouter.post('/create', protect, createChat)
 chatRouter.get('/create', protect, createChat)
 chatRouter.get('/get', protect, getChats)
-chatRouter.post('/delete', protect, deleteChat)
+chatRouter.post('/delete', protect, validate(deleteChatSchema), deleteChat)
 
 export default chatRouter
