@@ -131,9 +131,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 .lum-scroll { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, currentColor 24%, transparent) transparent; }
 
-/* Markdown inside assistant replies keeps native styling */
-.reset-tw :not(pre):not(code) { all: revert; }
+/* Markdown inside assistant replies keeps native styling.
+   .lum-code is exempt: `all: revert` would discard the Tailwind classes on
+   the code-block chrome and leave it unstyled. */
+.reset-tw :not(pre):not(code):not(.lum-code):not(.lum-code *) { all: revert; }
 .reset-tw pre { margin: 0; }
+.reset-tw .lum-code pre { margin: 0; }
 
 /* ── Animations from the design canvas ── */
 @keyframes lumBounce { 0%, 80%, 100% { transform: translateY(0); opacity: .4 } 40% { transform: translateY(-7px); opacity: 1 } }
@@ -164,6 +167,14 @@ h1, h2, h3, h4, h5, h6 {
     transition-duration: .01ms !important;
   }
 }
+
+/* ── Code blocks ──
+   prism.css styles `code[class*="language-"]` with the theme's base colour
+   (a light blue). For unhighlighted code that is only ~5:1 on the dark
+   surface, so raise the specificity and use a neutral high-contrast grey.
+   Token spans keep their own syntax colours - this only sets the base. */
+.lum-code pre code[class*="language-"] { color: #d4d4d4; }
+.lum-code pre { tab-size: 2; }
 
 /* ── Tags (design system .tag variants) ── */
 .tag-base,

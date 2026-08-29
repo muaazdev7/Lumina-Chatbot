@@ -1,58 +1,41 @@
-import { useEffect, useRef, useState } from 'react'
 import moment from 'moment'
 import Markdown from 'react-markdown'
-import Prism from 'prismjs'
 import SafeImage from './ui/SafeImage'
-import { CopyIcon, CheckIcon } from './ui/icons'
+import CodeBlock from './ui/CodeBlock'
 
-/** The dark code block from the design, with a working copy button. */
-const CodeBlock = ({ language, children }) => {
-  const [copied, setCopied] = useState(false)
-  const timer = useRef(null)
-
-  useEffect(() => () => clearTimeout(timer.current), [])
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(String(children))
-      setCopied(true)
-      clearTimeout(timer.current)
-      timer.current = setTimeout(() => setCopied(false), 1800)
-    } catch {
-      /* clipboard blocked — leave the label unchanged */
+/**
+ * react-markdown v9 removed the `inline` prop, so a fenced block is detected
+ * by overriding `pre` (fenced code is always <pre><code>). Overriding `code`
+ * alone would turn every inline `snippet` into a full-width dark block.
+ */
+const markdownComponents = {
+  pre({ children }) {
+    const codeEl = Array.isArray(children) ? children[0] : children
+    const className = codeEl?.props?.className || ''
+    const language = /language-([\w+-]+)/.exec(className)?.[1]
+    const raw = String(codeEl?.props?.children ?? '').replace(/\n$/, '')
+    return <CodeBlock language={language} code={raw} />
+  },
+  code({ children, className, ...props }) {
+    // `node` is react-markdown's AST handle - it must never reach the DOM.
+    delete props.node
+    // Only inline code reaches here now; block code is handled by `pre`.
+    if (/language-/.test(className || '')) {
+      return <code className={className} {...props}>{children}</code>
     }
-  }
-
-  return (
-    <div className="rounded-[18px] overflow-hidden bg-code shadow-[0_6px_18px_rgba(0,0,0,.22)] my-3">
-      <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-[rgba(249,244,237,.12)]">
-        <span className="text-[11px] tracking-[.08em] uppercase text-[#c0b6a5]">{language || 'code'}</span>
-        <button
-          type="button"
-          onClick={copy}
-          className="ml-auto flex items-center gap-1.5 min-h-[30px] px-3 rounded-full border border-[rgba(249,244,237,.18)]
-            bg-transparent text-[#f6efe4] cursor-pointer text-xs hover:bg-[rgba(249,244,237,.10)]"
-        >
-          {copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
-          {copied ? 'Copied' : 'Copy'}
-        </button>
-      </div>
-      <pre className="m-0 px-[18px] py-4 overflow-x-auto text-[13px] leading-[1.7] text-[#e1eecc]">
-        <code>{children}</code>
-      </pre>
-    </div>
-  )
+    return (
+      <code
+        className="px-1.5 py-0.5 rounded-md bg-sunk text-acc-ink text-[0.9em] font-mono"
+        {...props}
+      >
+        {children}
+      </code>
+    )
+  },
 }
 
 const Message = ({ message }) => {
-  const bodyRef = useRef(null)
   const isUser = message.role === 'user'
-
-  // Scoped to this message — highlightAll() re-scanned the whole document.
-  useEffect(() => {
-    if (message.isImage || !bodyRef.current) return
-    Prism.highlightAllUnder(bodyRef.current)
-  }, [message.content, message.isImage])
 
   if (isUser) {
     return (
@@ -95,20 +78,8 @@ const Message = ({ message }) => {
           </>
         ) : (
           <>
-            <div ref={bodyRef} className="reset-tw text-[15px] leading-[1.65]">
-              <Markdown
-                components={{
-                  code({ inline, className, children, ...props }) {
-                    const language = /language-(\w+)/.exec(className || '')?.[1]
-                    if (inline) {
-                      return <code className={className} {...props}>{children}</code>
-                    }
-                    return <CodeBlock language={language}>{String(children).replace(/\n$/, '')}</CodeBlock>
-                  },
-                }}
-              >
-                {message.content}
-              </Markdown>
+            <div className="reset-tw text-[15px] leading-[1.65]">
+              <Markdown components={markdownComponents}>{message.content}</Markdown>
             </div>
             <p className="mt-3 mb-0 text-[11px] text-muted">{moment(message.timestamp).fromNow()}</p>
           </>
