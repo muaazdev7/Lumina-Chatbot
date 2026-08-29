@@ -1,6 +1,7 @@
 import Transaction, { TRANSACTION_STATUS } from "../models/Transaction.js"
 import Stripe from 'stripe'
 import { resolveClientOrigin } from "../configs/allowedOrigins.js"
+import { asyncHandler } from '../middlewares/asyncHandler.js'
 
 const plans = [
         {
@@ -28,44 +29,39 @@ const plans = [
 
 
 // API Controller for getting all plans
-export const getPlans = async (req, res) => {
-    try {
-        res.json({success: true, plans})
-    } catch (error) {
-        res.json({success: false, message: error.message})
-    }
-}
+export const getPlans = asyncHandler(async (req, res) => {
+    res.json({success: true, plans})
+})
 
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-08-26.dahlia' })
 
 // API Controller for purchasing a plan
-export const purchasePlan = async (req, res) =>{
-    try {
-        const { planId } = req.body
-        const userId = req.user._id
-        const plan = plans.find(plan => plan._id === planId)
+export const purchasePlan = asyncHandler(async (req, res) => {
+    const { planId } = req.body
+    const userId = req.user._id
+    const plan = plans.find(plan => plan._id === planId)
 
-        if(!plan){
-            return res.status(400).json({success: false, message: "Invalid plan"})
-        }
+    if(!plan){
+        return res.status(400).json({success: false, message: "Invalid plan"})
+    }
 
-        // Create new Transaction. Price and credits come from the server-side
-        // `plans` array above - never from the request body.
-        const transaction = await Transaction.create({
-            userId: userId,
-            planId: plan._id,
-            amount: plan.price,
-            credits: plan.credits,
-            isPaid: false,
-            status: TRANSACTION_STATUS.PENDING
-        })
+    // Create new Transaction. Price and credits come from the server-side
+    // `plans` array above - never from the request body.
+    const transaction = await Transaction.create({
+        userId: userId,
+        planId: plan._id,
+        amount: plan.price,
+        credits: plan.credits,
+        isPaid: false,
+        status: TRANSACTION_STATUS.PENDING
+    })
 
-        // Only ever redirect to an origin on the configured allowlist, so a
-        // caller cannot point the post-payment redirect at their own domain.
-        const origin = resolveClientOrigin(req.headers.origin)
+    // Only ever redirect to an origin on the configured allowlist, so a
+    // caller cannot point the post-payment redirect at their own domain.
+    const origin = resolveClientOrigin(req.headers.origin)
 
-        const session = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
     line_items: [
         {
             price_data: {
@@ -92,8 +88,4 @@ export const purchasePlan = async (req, res) =>{
     ).catch(error => console.error('[credit] could not store session id:', error.message))
 
     res.json({success:true, url:session.url})
-
-    } catch (error) {
-        res.status(500).json({success:false, message:error.message})
-    }
-}
+})

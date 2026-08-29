@@ -6,7 +6,7 @@ import User from '../models/User.js'
 const APP_ID = 'Lumina'
 
 // Module scope: one client for the process instead of one per request.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-08-26.dahlia' })
 
 // Cached after the first attempt. Standalone mongod does not support
 // multi-document transactions; a replica set / Atlas cluster does.

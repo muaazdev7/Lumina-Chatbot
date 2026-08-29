@@ -18,8 +18,8 @@ export const getCurrentUser = async () => {
     return data
 }
 
-// GET /api/user/published-images -> { success, images } (public)
-export const getPublishedImages = async () => {
-    const { data } = await api.get('/user/published-images')
+// GET /api/user/published-images -> { success, images, page, limit, hasMore } (public)
+export const getPublishedImages = async ({ page = 1, limit = 20 } = {}) => {
+    const { data } = await api.get('/user/published-images', { params: { page, limit } })
     return data
 }
