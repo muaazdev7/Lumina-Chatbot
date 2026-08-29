@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { Suspense, lazy, useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
-import Message from './Message'
+// 3.10 - Message owns react-markdown and prismjs, the two heaviest deps.
+// Loading it on demand keeps them out of the initial bundle. One Suspense
+// boundary wraps the whole list rather than one per row.
+const Message = lazy(() => import('./Message'))
 import { sendImageMessage, sendTextMessage } from '../services/messageService'
 import { getErrorMessage } from '../services/api'
 
@@ -120,7 +123,9 @@ const Chatbox = () => {
               dark:text-white/80 font-semibold tracking-tight'>Ask me anything.</p>
           </div>
         )}
-        {messages.map((message, index) => <Message key={index} message={message} />)}
+        <Suspense fallback={null}>
+          {messages.map((message, index) => <Message key={message._id || `${message.timestamp}-${message.role}-${index}`} message={message} />)}
+        </Suspense>
 
         {/* Three dot loading */}
         {loading && (

@@ -5,17 +5,17 @@
   "main": "index.js",
   "scripts": {
     "server": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@imagekit/nodejs": "^7.11.0",
     "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -27,10 +27,12 @@
     "morgan": "^1.12.0",
     "openai": "^7.7.0",
     "stripe": "^22.6.0",
-    "svix": "^2.1.0",
     "zod": "^4.5.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "mongodb-memory-server": "^11.2.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.11"
   }
 }

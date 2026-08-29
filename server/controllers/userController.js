@@ -58,8 +58,19 @@ export const getUser = asyncHandler(async (req, res) => {
     return res.json({ success: true, user: toPublicUser(req.user) })
 })
 
+// 3.3 - pagination bounds for the public gallery.
+const DEFAULT_PAGE_SIZE = 20
+const MAX_PAGE_SIZE = 50
+
 // API to get published images
 export const getPublishedImages = asyncHandler(async (req, res) => {
+    // Query params are strings and come from an unauthenticated endpoint,
+    // so clamp them rather than trusting them.
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1)
+    const requested = Number.parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE
+    const limit = Math.min(Math.max(1, requested), MAX_PAGE_SIZE)
+    const skip = (page - 1) * limit
+
     const publishedImageMessages = await Chat.aggregate([
         { $unwind: "$messages" },
         {
@@ -68,7 +79,10 @@ export const getPublishedImages = asyncHandler(async (req, res) => {
                 "messages.isPublished": true
             }
         },
+        // $sort MUST stay before $skip/$limit, or pages contain arbitrary rows.
         { $sort: { "messages.timestamp": -1 } },
+        { $skip: skip },
+        { $limit: limit + 1 },   // fetch one extra to detect a further page
         {
             $project: {
                 _id: 0,
@@ -78,5 +92,8 @@ export const getPublishedImages = asyncHandler(async (req, res) => {
         }
     ])
 
-    res.json({ success: true, images: publishedImageMessages })
+    const hasMore = publishedImageMessages.length > limit
+    const images = hasMore ? publishedImageMessages.slice(0, limit) : publishedImageMessages
+
+    res.json({ success: true, images, page, limit, hasMore })
 })

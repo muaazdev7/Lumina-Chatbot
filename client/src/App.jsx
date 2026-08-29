@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { Suspense, lazy, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import Chatbox from './components/Chatbox'
-import Credits from './pages/Credits'
-import Community from './pages/Community'
+// 3.10 - Credits and Community are not needed on first paint, so their code
+// (and react-markdown/prismjs pulled in transitively) loads on demand.
+const Credits = lazy(() => import('./pages/Credits'))
+const Community = lazy(() => import('./pages/Community'))
 import Loading from './pages/Loading'
 import Login from './pages/Login'
 import { assets } from './assets/assets'
@@ -40,11 +42,15 @@ const App = () => {
             {/* 2.6 - a render error inside a route no longer blanks the app;
                 the sidebar stays usable. */}
             <ErrorBoundary>
-              <Routes>
-                <Route path='/' element={<Chatbox />} />
-                <Route path='/credits' element={<Credits />} />
-                <Route path='/community' element={<Community />} />
-              </Routes>
+              {/* Loading only redirects on the /loading route, so it is safe
+                  to reuse as a Suspense fallback here. */}
+              <Suspense fallback={<Loading />}>
+                <Routes>
+                  <Route path='/' element={<Chatbox />} />
+                  <Route path='/credits' element={<Credits />} />
+                  <Route path='/community' element={<Community />} />
+                </Routes>
+              </Suspense>
             </ErrorBoundary>
           </div>
         ) : (

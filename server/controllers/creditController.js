@@ -34,7 +34,7 @@ export const getPlans = asyncHandler(async (req, res) => {
 })
 
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-08-26.dahlia' })
 
 // API Controller for purchasing a plan
 export const purchasePlan = asyncHandler(async (req, res) => {

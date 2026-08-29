@@ -15,6 +15,12 @@ const ChatSchema = new mongoose.Schema({
     ]
 }, {timestamps: true})
 
+// 3.2 - serves getChats: `find({ userId }).sort({ updatedAt: -1 })`.
+// The compound index satisfies both the filter and the sort from the index
+// alone, avoiding a collection scan plus an in-memory sort.
+// Note: userId stays a String - changing the type would need a migration.
+ChatSchema.index({ userId: 1, updatedAt: -1 })
+
 const Chat = mongoose.model('Chat', ChatSchema)
 
 export default Chat;
