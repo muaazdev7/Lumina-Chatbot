@@ -71,7 +71,9 @@ export const getPublishedImages = asyncHandler(async (req, res) => {
     const limit = Math.min(Math.max(1, requested), MAX_PAGE_SIZE)
     const skip = (page - 1) * limit
 
-    const publishedImageMessages = await Chat.aggregate([
+    // $facet runs the page and the count over one pass of the matched set,
+    // so the gallery can show "Showing N of TOTAL" without a second query.
+    const [result] = await Chat.aggregate([
         { $unwind: "$messages" },
         {
             $match: {
@@ -79,21 +81,30 @@ export const getPublishedImages = asyncHandler(async (req, res) => {
                 "messages.isPublished": true
             }
         },
-        // $sort MUST stay before $skip/$limit, or pages contain arbitrary rows.
-        { $sort: { "messages.timestamp": -1 } },
-        { $skip: skip },
-        { $limit: limit + 1 },   // fetch one extra to detect a further page
         {
-            $project: {
-                _id: 0,
-                imageUrl: "$messages.content",
-                userName: "$userName"
+            $facet: {
+                page: [
+                    // $sort MUST stay before $skip/$limit, or pages contain arbitrary rows.
+                    { $sort: { "messages.timestamp": -1 } },
+                    { $skip: skip },
+                    { $limit: limit + 1 },   // one extra to detect a further page
+                    {
+                        $project: {
+                            _id: 0,
+                            imageUrl: "$messages.content",
+                            userName: "$userName"
+                        }
+                    }
+                ],
+                total: [{ $count: "count" }]
             }
         }
     ])
 
-    const hasMore = publishedImageMessages.length > limit
-    const images = hasMore ? publishedImageMessages.slice(0, limit) : publishedImageMessages
+    const rows = result?.page ?? []
+    const total = result?.total?.[0]?.count ?? 0
+    const hasMore = rows.length > limit
+    const images = hasMore ? rows.slice(0, limit) : rows
 
-    res.json({ success: true, images, page, limit, hasMore })
+    res.json({ success: true, images, page, limit, total, hasMore })
 })

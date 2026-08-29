@@ -52,4 +52,9 @@ export const getErrorMessage = (error, fallback = 'Something went wrong') => {
     return error?.message || fallback
 }
 
+/** True when a request was aborted by us (the Stop button), not a real failure. */
+export const isAbortError = (error) => (
+    error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError'
+)
+
 export default api

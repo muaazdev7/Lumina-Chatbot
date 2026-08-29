@@ -1,30 +1,182 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
-*{
-   font-family: "Montserrat", sans-serif;
-}
-
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme{
-  --color-primary:#E6CCFF
+/* ═══════════════════════════════════════════════════════════════════
+   Organic design system — tokens from
+   _ds/organic-7a0429c2-32f8-4e66-b50f-3a99d1c66ea1/styles.css
+   and the light/dark frames in "Lumina Frontend.dc.html".
+   Every colour, font and radius in the app comes from these.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Light theme */
+  --bg: #f5ead8;
+  --surface: #ebddc5;
+  --panel: #fbf7f0;
+  --sunk: #efe4cf;
+  --text: #201e1d;
+  --muted: #645c50;
+  --faint: #82796a;
+  --line: #dcd3c4;
+  --accent: #c67139;
+  --accent-2: #7a8a5e;
+  --acc-soft: #ffe1d0;
+  --acc-ink: #8c491a;
+  --sage-soft: #e1eecc;
+  --sage-ink: #56633f;
+  --code: #2e2b25;
+  --danger: #8c491a;
+  --shadow: 0 14px 34px rgba(46, 43, 37, .16);
+
+  --font-heading: "Caprasimo", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+
+  color-scheme: light;
 }
 
-::-webkit-scrollbar {
-  display: none;
+.dark {
+  --bg: #1d1a17;
+  --surface: #282520;
+  --panel: #2f2b25;
+  --sunk: #232019;
+  --text: #f6efe4;
+  --muted: #c0b6a5;
+  --faint: #a19786;
+  --line: #474238;
+  --accent: #f6a06b;
+  --accent-2: #aebf92;
+  --acc-soft: #3a2a1f;
+  --acc-ink: #ffc6a5;
+  --sage-soft: #2b3123;
+  --sage-ink: #ccdbb2;
+  --code: #16130f;
+  --danger: #ffc6a5;
+  --shadow: 0 14px 34px rgba(0, 0, 0, .34);
 
+  color-scheme: dark;
 }
 
-.reset-tw :not(pre):not(code){
-  all:revert;
+/* Expose the tokens to Tailwind utilities (bg-bg, text-muted, border-line…) */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-panel: var(--panel);
+  --color-sunk: var(--sunk);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-acc-soft: var(--acc-soft);
+  --color-acc-ink: var(--acc-ink);
+  --color-sage-soft: var(--sage-soft);
+  --color-sage-ink: var(--sage-ink);
+  --color-code: var(--code);
+  --color-danger: var(--danger);
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
-.loader div:nth-child(2) {
-  animation-delay: 0.2s;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  background: var(--bg);
+  color: var(--text);
 }
 
-.loader div:nth-child(3) {
-  animation-delay: 0.4s;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0;
 }
+
+/* Themed focus — never the browser default (design system: readme.md) */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* Photographs sit back into the warm ground rather than on top of it */
+.washed { filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94); }
+
+/* Visible, themed scrollbar — the old build hid scrollbars entirely,
+   which removed the only affordance that content scrolls. */
+.lum-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.lum-scroll::-webkit-scrollbar-track { background: transparent; }
+.lum-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.lum-scroll:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, currentColor 34%, transparent);
+  background-clip: padding-box;
+}
+.lum-scroll { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, currentColor 24%, transparent) transparent; }
+
+/* Markdown inside assistant replies keeps native styling */
+.reset-tw :not(pre):not(code) { all: revert; }
+.reset-tw pre { margin: 0; }
+
+/* ── Animations from the design canvas ── */
+@keyframes lumBounce { 0%, 80%, 100% { transform: translateY(0); opacity: .4 } 40% { transform: translateY(-7px); opacity: 1 } }
+@keyframes lumSpin   { to { transform: rotate(360deg) } }
+@keyframes lumShimmer{ 0% { background-position: -340px 0 } 100% { background-position: 340px 0 } }
+@keyframes lumRise   { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+@keyframes lumPulse  { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
+
+.lum-rise { animation: lumRise .4s ease both; }
+.lum-pulse { animation: lumPulse 1.4s ease-in-out infinite; }
+.lum-spin { animation: lumSpin 1s linear infinite; }
+
+.lum-skeleton {
+  background: linear-gradient(90deg, var(--sunk) 8%, var(--panel) 22%, var(--sunk) 36%);
+  background-size: 340px 100%;
+  animation: lumShimmer 1.3s linear infinite;
+}
+
+.lum-card { transition: transform .2s, box-shadow .2s; }
+.lum-card:hover { transform: translateY(-3px); }
+.lum-tile img { transition: transform .5s; }
+.lum-tile:hover img { transform: scale(1.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ── Tags (design system .tag variants) ── */
+.tag-base,
+.tag-accent,
+.tag-sage,
+.tag-neutral {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: .02em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.tag-accent  { background: var(--acc-soft);  color: var(--acc-ink); }
+.tag-sage    { background: var(--sage-soft); color: var(--sage-ink); }
+.tag-neutral { background: var(--sunk);      color: var(--muted); }

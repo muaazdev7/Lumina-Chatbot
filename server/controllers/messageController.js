@@ -37,7 +37,27 @@ const fetchGeneratedImage = async (url, {
     let lastBody = ''
 
     for (let attempt = 1; attempt <= attempts; attempt++) {
-        const response = await axios.get(url, { responseType: "arraybuffer" })
+        let response
+        try {
+            response = await axios.get(url, { responseType: "arraybuffer" })
+        } catch (error) {
+            // ImageKit answers with a readable reason in the body (e.g.
+            // "Extensions limit exceeded" when the AI quota runs out).
+            // Surface that instead of axios's "status code 403".
+            const status = error.response?.status
+            const reason = error.response?.data
+                ? Buffer.from(error.response.data).toString('utf8').slice(0, 120).trim()
+                : error.message
+
+            const err = new Error(
+                status === 403 || status === 402
+                    ? `Image generation is unavailable right now (${reason}). Your credits have been returned.`
+                    : `Image generation failed (${status || 'network error'}): ${reason}`
+            )
+            err.status = 502
+            throw err
+        }
+
         const buffer = Buffer.from(response.data)
 
         if (isRenderedImage(buffer)) {
@@ -73,6 +93,42 @@ const chargeCredits = (userId, cost) =>
 const refundCredits = (userId, cost) =>
     User.updateOne({ _id: userId }, { $inc: { credits: cost } })
         .catch(error => console.error('[message] refund failed for', String(userId), '-', error.message))
+
+/**
+ * The UI offers a Stop button during generation. For that promise ("no credits
+ * are spent") to be true, an aborted request must give the credits back:
+ * charging happens before generation, so without this the user pays for work
+ * they cancelled.
+ *
+ * Returns a guard whose `settle()` disarms the refund once we have responded,
+ * so a normal completion never triggers it.
+ */
+const refundIfClientDisconnects = (req, res, userId, cost) => {
+    let settled = false        // we finished and responded
+    let disconnected = false   // the client went away first
+
+    const onClose = () => {
+        if (settled || res.writableEnded) return
+        disconnected = true
+        console.log(`[message] client disconnected before completion - refunding ${cost} credit(s) to ${userId}`)
+        refundCredits(userId, cost)
+    }
+
+    res.on('close', onClose)
+
+    return {
+        settle() {
+            settled = true
+            res.off('close', onClose)
+        },
+        // NOTE: do not test req.destroyed here - Node marks the request stream
+        // destroyed once its body has been fully read, which is true of every
+        // normal request. Only the 'close' handler above can prove a disconnect.
+        get aborted() {
+            return disconnected
+        },
+    }
+}
 
 // Shared validation: resolves the chat owned by this user, or sends an error.
 // The credit check is NOT here - it must happen atomically at charge time.
@@ -114,6 +170,9 @@ export const textMessageController = asyncHandler(async (req, res) => {
         return res.status(402).json({ success: false, message: "You don't have enough credits to use this feature" })
     }
 
+    // Refund automatically if the user hits Stop before we reply.
+    const guard = refundIfClientDisconnects(req, res, userId, TEXT_MESSAGE_COST)
+
     try {
         chat.messages.push({ role: "user", content: prompt, timestamp: Date.now(), isImage: false })
 
@@ -129,12 +188,18 @@ export const textMessageController = asyncHandler(async (req, res) => {
             isImage: false
         }
 
+        // The client gave up: the disconnect guard refunds, so do not persist
+        // a reply nobody asked for any more.
+        if (guard.aborted) return
+
         chat.messages.push(reply)
         await chat.save()
 
+        guard.settle()
         // Report the authoritative balance, not one computed from a stale read.
         res.json({ success: true, reply, credits: charged.credits })
     } catch (error) {
+        guard.settle()
         await refundCredits(userId, TEXT_MESSAGE_COST)
         throw error
     }
@@ -153,6 +218,9 @@ export const imageMessageController = asyncHandler(async (req, res) => {
     if (!charged) {
         return res.status(402).json({ success: false, message: "You don't have enough credits to use this feature" })
     }
+
+    // Image generation runs 20-90s, so Stop matters most here.
+    const guard = refundIfClientDisconnects(req, res, userId, IMAGE_MESSAGE_COST)
 
     try {
     // Push user message
@@ -191,12 +259,16 @@ export const imageMessageController = asyncHandler(async (req, res) => {
         isPublished: Boolean(isPublished)
     }
 
+    if (guard.aborted) return
+
     chat.messages.push(reply)
     await chat.save()
 
+    guard.settle()
     // Authoritative balance from the atomic charge.
     res.json({ success: true, reply, credits: charged.credits })
     } catch (error) {
+        guard.settle()
         await refundCredits(userId, IMAGE_MESSAGE_COST)
         throw error
     }
