@@ -94,7 +94,7 @@ cp client/.env.example client/.env
 | `MONGO_URI` | **yes** | MongoDB connection string |
 | `MONGO_DB_NAME` | no | Defaults to `lumina` |
 | `JWT_SECRET` | **yes** | Long random string (see below) |
-| `JWT_EXPIRE` | no | Defaults to `30d` |
+| `JWT_EXPIRE` | no | Defaults to `7d` |
 | `GEMINI_API_KEY` | **yes** | Google Gemini API key |
 | `GEMINI_BASE_URL` | no | Gemini's OpenAI-compatible endpoint |
 | `GEMINI_MODEL` | no | Defaults to `gemini-3.6-flash` |

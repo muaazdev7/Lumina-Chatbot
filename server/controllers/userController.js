@@ -3,6 +3,11 @@ import User from "../models/User.js";
 import Chat from "../models/Chat.js";
 import bcrypt from 'bcrypt';
 
+// 1.2 - server-side registration rules. The client's minLength is only a hint;
+// calling the API directly bypasses it entirely.
+const MIN_PASSWORD_LENGTH = 8
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRE || '30d'
@@ -26,10 +31,22 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ success: false, message: "Name, email and password are required" })
         }
 
+        if (!EMAIL_PATTERN.test(String(email).trim())) {
+            return res.status(400).json({ success: false, message: "Please enter a valid email address" })
+        }
+
+        if (String(password).length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({
+                success: false,
+                message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
+            })
+        }
+
         const userExists = await User.findOne({ email })
 
+        // 1.7 - do not confirm which emails are registered.
         if (userExists) {
-            return res.status(409).json({ success: false, message: "User already exists" })
+            return res.status(409).json({ success: false, message: "Unable to register with these details" })
         }
 
         const user = await User.create({ name, email, password })

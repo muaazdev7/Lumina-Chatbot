@@ -1,6 +1,7 @@
 import express from 'express'
 import 'dotenv/config'
 import cors from 'cors'
+import helmet from 'helmet'
 import connectDB from './configs/db.js'
 import userRouter from './routes/userRoutes.js'
 import chatRouter from './routes/chatRoutes.js'
@@ -22,6 +23,10 @@ try {
 // body stays intact for signature verification.
 app.post('/api/stripe', express.raw({ type: 'application/json' }), stripeWebhooks)
 
+// 1.3 - security headers. Mounted after the Stripe raw-body route above so
+// that route is untouched. This does NOT replace CORS.
+app.use(helmet())
+
 // CORS - allowed origins come from CLIENT_URL (comma separated),
 // shared with the Stripe redirect URLs via configs/allowedOrigins.js
 app.use(cors({
@@ -38,7 +43,9 @@ app.use(cors({
 }))
 
 // Middleware
-app.use(express.json())
+// 1.4 - explicit body limit. The largest legitimate body is a text prompt.
+// The Stripe route above uses express.raw and is unaffected.
+app.use(express.json({ limit: '100kb' }))
 
 // Routes
 app.get('/', (req, res) => res.send('Server is live'))
